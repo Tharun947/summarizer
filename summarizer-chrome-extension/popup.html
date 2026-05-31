@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Page Summarizer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+<div class="container">
+    <h2>AI Page Summarizer</h2>
+
+    <label for="summaryType">Summary Type</label>
+    <select id="summaryType">
+        <option value="DEFAULT">Default</option>
+        <option value="BULLET_POINTS">Bullet Points</option>
+        <option value="DETAILED">Detailed</option>
+        <option value="KEY_INSIGHTS">Key Insights</option>
+    </select>
+
+    <button id="summarizeBtn">Summarize This Page</button>
+
+    <p id="status"></p>
+
+    <div id="result" class="result hidden">
+        <h3>Summary</h3>
+        <p id="summary"></p>
+
+        <h3>Key Points</h3>
+        <ul id="keyPoints"></ul>
+
+        <h3>Notes</h3>
+        <p id="notes"></p>
+    </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

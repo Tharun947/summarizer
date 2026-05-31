@@ -2,55 +2,78 @@ package com.tharun.summarizer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tharun.summarizer.dto.SummaryResponse;
+import com.tharun.summarizer.dto.SummaryType;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class SummaryService {
 
-    private final ChunkService chunkService;
+    private static final int MAX_INPUT_CHARS = 15000;
+
     private final OpenAiService openAiService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SummaryService(ChunkService chunkService, OpenAiService openAiService) {
-        this.chunkService = chunkService;
         this.openAiService = openAiService;
     }
 
     public SummaryResponse summarize(String text) {
-        List<String> chunks = chunkService.splitIntoChunks(text);
+        return summarize(text, SummaryType.DEFAULT);
+    }
 
-        String materialForFinalSummary;
-
-        if (chunks.size() == 1) {
-            materialForFinalSummary = chunks.get(0);
-        } else {
-            List<String> chunkSummaries = new ArrayList<>();
-
-            for (int i = 0; i < chunks.size(); i++) {
-                String prompt = """
-                        Summarize this PDF chunk clearly for a student.
-                        Keep important definitions, facts, and examples.
-                        Maximum 180 words.
-
-                        Chunk number: %d
-
-                        Text:
-                        %s
-                        """.formatted(i + 1, chunks.get(i));
-
-                chunkSummaries.add(openAiService.ask(prompt));
-            }
-
-            materialForFinalSummary = String.join("\n\n", chunkSummaries);
+    public SummaryResponse summarize(String text, SummaryType summaryType) {
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("Input text cannot be empty.");
         }
 
-        String finalPrompt = """
-                You are a study notes summarizer for students.
+        String cleanedText = text
+                .replaceAll("\\s+", " ")
+                .trim();
 
-                Read the content below and return ONLY valid JSON.
+        if (cleanedText.length() > MAX_INPUT_CHARS) {
+            cleanedText = cleanedText.substring(0, MAX_INPUT_CHARS);
+        }
+
+        String finalPrompt = buildFinalPrompt(cleanedText, summaryType);
+
+        String aiJson = openAiService.ask(finalPrompt);
+
+        return convertJsonToResponse(aiJson);
+    }
+
+    private String buildFinalPrompt(String content, SummaryType summaryType) {
+        String instruction = switch (summaryType) {
+            case BULLET_POINTS -> """
+                    Focus mainly on bullet points.
+                    The keyPoints array should contain 8 to 10 clear bullet points.
+                    Keep the summary short.
+                    """;
+
+            case DETAILED -> """
+                    Give a detailed but easy-to-understand summary.
+                    The summary should explain the topic clearly.
+                    The notes should be useful for revision.
+                    """;
+
+            case KEY_INSIGHTS -> """
+                    Focus on the most important insights, lessons, conclusions, and takeaways.
+                    Avoid unnecessary small details.
+                    """;
+
+            default -> """
+                    Give a balanced student-friendly summary.
+                    Include summary, key points, and short revision notes.
+                    """;
+        };
+
+        return """
+                You are an AI summarization assistant.
+
+                %s
+
+                Return ONLY valid JSON.
                 Do not use markdown.
                 Do not wrap the answer in triple backticks.
 
@@ -63,11 +86,7 @@ public class SummaryService {
 
                 Content:
                 %s
-                """.formatted(materialForFinalSummary);
-
-        String aiJson = openAiService.ask(finalPrompt);
-
-        return convertJsonToResponse(aiJson);
+                """.formatted(instruction, content);
     }
 
     private SummaryResponse convertJsonToResponse(String aiJson) {

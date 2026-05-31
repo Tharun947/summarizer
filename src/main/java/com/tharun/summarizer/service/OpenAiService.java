@@ -3,6 +3,7 @@ package com.tharun.summarizer.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -13,62 +14,68 @@ import java.util.Map;
 @Service
 public class OpenAiService {
 
-    @Value("${gemini.api.key}")
+    @Value("${groq.api.key}")
     private String apiKey;
 
-    @Value("${gemini.model}")
+    @Value("${groq.model}")
     private String model;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final RestClient restClient = RestClient.builder()
-            .baseUrl("https://generativelanguage.googleapis.com/v1beta")
+            .baseUrl("https://api.groq.com/openai/v1")
             .build();
 
     public String ask(String prompt) {
-        Map<String, Object> requestBody = Map.of(
-                "contents", List.of(
-                        Map.of(
-                                "parts", List.of(
-                                        Map.of("text", prompt)
-                                )
-                        )
-                ),
-                "generationConfig", Map.of(
-                        "temperature", 0.2
-                )
-        );
+        try {
+            Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", List.of(
+                            Map.of(
+                                    "role", "system",
+                                    "content", "You are a helpful AI summarization assistant. Return clean and valid JSON when asked."
+                            ),
+                            Map.of(
+                                    "role", "user",
+                                    "content", prompt
+                            )
+                    ),
+                    "temperature", 0.2
+            );
 
-        String responseJson = restClient.post()
-                .uri("/models/" + model + ":generateContent?key=" + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(String.class);
+            String responseJson = restClient.post()
+                    .uri("/chat/completions")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
 
-        return extractText(responseJson);
+            return extractText(responseJson);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Groq request failed: " + e.getMessage());
+        }
     }
 
     private String extractText(String responseJson) {
         try {
             JsonNode root = objectMapper.readTree(responseJson);
 
-            JsonNode textNode = root
-                    .path("candidates")
+            JsonNode contentNode = root
+                    .path("choices")
                     .path(0)
-                    .path("content")
-                    .path("parts")
-                    .path(0)
-                    .path("text");
+                    .path("message")
+                    .path("content");
 
-            if (textNode.isMissingNode() || textNode.asText().isBlank()) {
-                throw new RuntimeException("No text returned from Gemini.");
+            if (contentNode.isMissingNode() || contentNode.asText().isBlank()) {
+                throw new RuntimeException("No text returned from Groq.");
             }
 
-            return textNode.asText().trim();
+            return contentNode.asText().trim();
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to read Gemini response: " + e.getMessage());
+            throw new RuntimeException("Failed to read Groq response: " + e.getMessage());
         }
     }
 }
