@@ -1,4 +1,4 @@
-# AI Summarizer
+# Summarizer
 
 A Spring Boot based application that summarizes text, PDF files, URLs, and browser page content using the Groq API. The project also includes a Chrome extension that allows users to summarize the current webpage directly.
 
