@@ -1,812 +1,543 @@
-# \# AI Multi-Input Summarizer
+# AI Multi-Input Summarizer
 
-# 
+A Spring Boot based AI summarization system that can summarize text, PDF files, webpage URLs, and browser page content using the Groq API. The project also includes a Chrome extension that reads the current webpage content and sends it to the backend summarization API.
 
-# A Spring Boot based AI summarization system that can summarize text, PDF files, webpage URLs, and browser page content using the Groq API. The project also includes a Chrome extension that reads the current webpage content and sends it to the backend summarization API.
+---
 
-# 
+## Project Overview
 
-# \---
+This project is designed to help users quickly generate summaries from different input sources. It supports:
 
-# 
+* Raw text summarization
+* PDF file summarization
+* URL / webpage summarization
+* Chrome extension page summarization
+* Multiple summary types such as default summary, bullet points, detailed summary, and key insights
 
-# \## Project Overview
+The backend is built using Java and Spring Boot. PDF text is extracted using PDFBox. Webpage content is extracted using jsoup. AI processing is handled using the Groq API.
 
-# 
+---
 
-# This project is designed to help users quickly generate summaries from different input sources. It supports:
+## Features
 
-# 
+### 1. Text Summarization
 
-# \* Raw text summarization
+Users can send raw text to the backend and receive:
 
-# \* PDF file summarization
+* Summary
+* Key points
+* Short revision notes
 
-# \* URL / webpage summarization
+### 2. PDF Summarization
 
-# \* Chrome extension page summarization
+Users can upload a PDF file. The backend extracts text from the PDF and sends it to the AI model for summarization.
 
-# \* Multiple summary types such as default summary, bullet points, detailed summary, and key insights
+### 3. URL Summarization
 
-# 
+Users can send an article or webpage URL. The backend fetches the webpage, extracts readable content, and summarizes it.
 
-# The backend is built using Java and Spring Boot. PDF text is extracted using PDFBox. Webpage content is extracted using jsoup. AI processing is handled using the Groq API.
+### 4. Chrome Extension
 
-# 
+The Chrome extension allows users to open any normal webpage, click the extension, and summarize the current page content.
 
-# \---
+### 5. Summary Types
 
-# 
+Supported summary types:
 
-# \## Features
+```text
+DEFAULT
+BULLET_POINTS
+DETAILED
+KEY_INSIGHTS
+```
 
-# 
+---
 
-# \### 1. Text Summarization
+## Tech Stack
 
-# 
+### Backend
 
-# Users can send raw text to the backend and receive:
+* Java
+* Spring Boot
+* Maven
+* PDFBox
+* jsoup
+* Groq API
 
-# 
+### Testing
 
-# \* Summary
+* Postman
 
-# \* Key points
+### Browser Extension
 
-# \* Short revision notes
+* HTML
+* CSS
+* JavaScript
+* Chrome Extension Manifest V3
 
-# 
+---
 
-# \### 2. PDF Summarization
+## Project Structure
 
-# 
+```text
+summarizer/
+│
+├── src/
+│   └── main/
+│       ├── java/com/tharun/summarizer/
+│       │   ├── config/
+│       │   │   └── CorsConfig.java
+│       │   ├── controller/
+│       │   │   └── SummaryController.java
+│       │   ├── dto/
+│       │   │   ├── SummaryResponse.java
+│       │   │   ├── SummaryType.java
+│       │   │   ├── TextSummaryRequest.java
+│       │   │   └── UrlSummaryRequest.java
+│       │   ├── exception/
+│       │   │   └── GlobalExceptionHandler.java
+│       │   ├── service/
+│       │   │   ├── ChunkService.java
+│       │   │   ├── OpenAiService.java
+│       │   │   ├── PdfTextService.java
+│       │   │   ├── SummaryService.java
+│       │   │   └── UrlContentService.java
+│       │   └── SummarizerApplication.java
+│       │
+│       └── resources/
+│           └── application.properties
+│
+├── summarizer-chrome-extension/
+│   ├── manifest.json
+│   ├── popup.html
+│   ├── popup.css
+│   └── popup.js
+│
+├── pom.xml
+└── README.md
+```
 
-# Users can upload a PDF file. The backend extracts text from the PDF and sends it to the AI model for summarization.
+---
 
-# 
+## Environment Setup
 
-# \### 3. URL Summarization
+This project uses the Groq API. The API key must not be hardcoded inside the project.
 
-# 
+Set the API key as an environment variable.
 
-# Users can send an article or webpage URL. The backend fetches the webpage, extracts readable content, and summarizes it.
+### Windows CMD
 
-# 
+```cmd
+setx GROQ_API_KEY "your_groq_api_key_here"
+```
 
-# \### 4. Chrome Extension
+After setting the key, close and reopen CMD or VS Code.
 
-# 
+Check if the key is available:
 
-# The Chrome extension allows users to open any normal webpage, click the extension, and summarize the current page content.
+```cmd
+echo %GROQ_API_KEY%
+```
 
-# 
+---
 
-# \### 5. Summary Types
+## Application Properties
 
-# 
+The `application.properties` file should look like this:
 
-# Supported summary types:
+```properties
+spring.application.name=summarizer
+server.port=8080
 
-# 
+groq.api.key=${GROQ_API_KEY}
+groq.model=llama-3.3-70b-versatile
 
-# ```text
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+```
 
-# DEFAULT
+---
 
-# BULLET\_POINTS
+## How to Run the Backend
 
-# DETAILED
+From the backend project root folder, run:
 
-# KEY\_INSIGHTS
+```bash
+mvn clean spring-boot:run
+```
 
-# ```
+The backend will start at:
 
-# 
+```text
+http://localhost:8080
+```
 
-# \---
+---
 
-# 
+## API Endpoints
 
-# \## Tech Stack
+### 1. Text Summarization API
 
-# 
+```text
+POST http://localhost:8080/api/summarize/text
+```
 
-# \### Backend
+#### Request Body
 
-# 
+```json
+{
+  "text": "Artificial intelligence helps students summarize content, understand concepts, and revise faster for exams.",
+  "summaryType": "DEFAULT"
+}
+```
 
-# \* Java
+#### Example Response
 
-# \* Spring Boot
+```json
+{
+  "summary": "Artificial intelligence helps students learn faster by summarizing content and explaining concepts clearly.",
+  "keyPoints": [
+    "AI helps students summarize long content.",
+    "AI can support exam revision.",
+    "AI makes concepts easier to understand."
+  ],
+  "notes": "AI can be used as a study assistant for summarizing notes, understanding topics, and preparing for exams."
+}
+```
 
-# \* Maven
+---
 
-# \* PDFBox
+### 2. PDF File Summarization API
 
-# \* jsoup
+```text
+POST http://localhost:8080/api/summarize/file
+```
 
-# \* Groq API
+#### Postman Setup
 
-# 
+Go to:
 
-# \### Testing
+```text
+Body -> form-data
+```
 
-# 
+Add:
 
-# \* Postman
+```text
+Key: file
+Type: File
+Value: Upload your PDF file
+```
 
-# 
+Optional summary type:
 
-# \### Browser Extension
+```text
+Key: summaryType
+Type: Text
+Value: DETAILED
+```
 
-# 
+Supported values:
 
-# \* HTML
+```text
+DEFAULT
+BULLET_POINTS
+DETAILED
+KEY_INSIGHTS
+```
 
-# \* CSS
+---
 
-# \* JavaScript
+### 3. URL Summarization API
 
-# \* Chrome Extension Manifest V3
+```text
+POST http://localhost:8080/api/summarize/url
+```
 
-# 
+#### Request Body
 
-# \---
+```json
+{
+  "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+  "summaryType": "KEY_INSIGHTS"
+}
+```
 
-# 
+#### Notes
 
-# \## Project Structure
+Some websites may block backend scraping or load content using JavaScript. In those cases, URL summarization may fail. The Chrome extension solves this better because it reads the already-loaded webpage content directly from the browser.
 
-# 
+---
 
-# ```text
+## How to Test Using Postman
 
-# summarizer/
+### Test 1: Text API
 
-# │
+1. Open Postman
+2. Select `POST`
+3. Enter:
 
-# ├── src/
+```text
+http://localhost:8080/api/summarize/text
+```
 
-# │   └── main/
+4. Go to:
 
-# │       ├── java/com/tharun/summarizer/
+```text
+Body -> raw -> JSON
+```
 
-# │       │   ├── config/
+5. Paste:
 
-# │       │   │   └── CorsConfig.java
+```json
+{
+  "text": "Artificial intelligence helps students summarize content, understand concepts, and revise faster for exams.",
+  "summaryType": "DEFAULT"
+}
+```
 
-# │       │   ├── controller/
+6. Click `Send`
 
-# │       │   │   └── SummaryController.java
+Expected result:
 
-# │       │   ├── dto/
+```text
+200 OK
+```
 
-# │       │   │   ├── SummaryResponse.java
+---
 
-# │       │   │   ├── SummaryType.java
+### Test 2: PDF API
 
-# │       │   │   ├── TextSummaryRequest.java
+1. Open Postman
+2. Select `POST`
+3. Enter:
 
-# │       │   │   └── UrlSummaryRequest.java
+```text
+http://localhost:8080/api/summarize/file
+```
 
-# │       │   ├── exception/
+4. Go to:
 
-# │       │   │   └── GlobalExceptionHandler.java
+```text
+Body -> form-data
+```
 
-# │       │   ├── service/
+5. Add:
 
-# │       │   │   ├── ChunkService.java
+```text
+file -> File -> choose a PDF
+summaryType -> Text -> DETAILED
+```
 
-# │       │   │   ├── OpenAiService.java
+6. Click `Send`
 
-# │       │   │   ├── PdfTextService.java
+Expected result:
 
-# │       │   │   ├── SummaryService.java
+```text
+200 OK
+```
 
-# │       │   │   └── UrlContentService.java
+---
 
-# │       │   └── SummarizerApplication.java
+### Test 3: URL API
 
-# │       │
+1. Open Postman
+2. Select `POST`
+3. Enter:
 
-# │       └── resources/
+```text
+http://localhost:8080/api/summarize/url
+```
 
-# │           └── application.properties
+4. Go to:
 
-# │
+```text
+Body -> raw -> JSON
+```
 
-# ├── summarizer-chrome-extension/
+5. Paste:
 
-# │   ├── manifest.json
+```json
+{
+  "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+  "summaryType": "KEY_INSIGHTS"
+}
+```
 
-# │   ├── popup.html
+6. Click `Send`
 
-# │   ├── popup.css
+Expected result:
 
-# │   └── popup.js
+```text
+200 OK
+```
 
-# │
+---
 
-# ├── pom.xml
+## Chrome Extension Setup
 
-# └── README.md
+The Chrome extension is inside:
 
-# ```
+```text
+summarizer-chrome-extension/
+```
 
-# 
+### Load Extension in Chrome
 
-# \---
+1. Open Chrome
+2. Go to:
 
-# 
+```text
+chrome://extensions
+```
 
-# \## Environment Setup
+3. Turn on `Developer mode`
+4. Click `Load unpacked`
+5. Select the `summarizer-chrome-extension` folder
+6. Pin the extension
+7. Open any normal webpage
+8. Click the extension icon
+9. Select summary type
+10. Click `Summarize This Page`
 
-# 
+### Extension API Used
 
-# This project uses the Groq API. The API key must not be hardcoded inside the project.
+The extension sends webpage text to:
 
-# 
+```text
+POST http://localhost:8080/api/summarize/text
+```
 
-# Set the API key as an environment variable.
+---
 
-# 
+## Error Handling
 
-# \### Windows CMD
+The backend handles:
 
-# 
+* Empty text input
+* Invalid PDF file
+* Empty PDF file
+* Large PDF upload
+* Invalid URL
+* Website content extraction failure
+* AI API request failure
 
-# ```cmd
+Example error response:
 
-# setx GROQ\_API\_KEY "your\_groq\_api\_key\_here"
+```json
+{
+  "error": "Input text cannot be empty."
+}
+```
 
-# ```
+---
 
-# 
+## Important Notes
 
-# After setting the key, close and reopen CMD or VS Code.
+* Do not commit API keys.
+* Do not hardcode Groq API keys in Java code or `application.properties`.
+* Keep the API key in the `GROQ_API_KEY` environment variable.
+* Some websites may block URL extraction.
+* Chrome extension summarization is usually more reliable than backend URL scraping because it reads the loaded page content from the browser.
 
-# 
+---
 
-# Check if the key is available:
+## Files to Push to GitLab
 
-# 
+Push these files:
 
-# ```cmd
+```text
+src/
+pom.xml
+README.md
+summarizer-chrome-extension/
+.gitignore
+```
 
-# echo %GROQ\_API\_KEY%
+Do not push these:
 
-# ```
+```text
+target/
+.env
+*.log
+API keys
+.idea/
+.vscode/
+```
 
-# 
+---
 
-# \---
+## Recommended `.gitignore`
 
-# 
+```gitignore
+# Maven build output
+target/
 
-# \## Application Properties
+# Environment files
+.env
+*.env
 
-# 
+# Logs
+*.log
 
-# The `application.properties` file should look like this:
+# IDE files
+.idea/
+.vscode/
 
-# 
+# OS files
+.DS_Store
+Thumbs.db
 
-# ```properties
+# API keys or secrets
+secrets.properties
+application-local.properties
+```
 
-# spring.application.name=summarizer
+---
 
-# server.port=8080
+## Git Commands
 
-# 
+Check changed files:
 
-# groq.api.key=${GROQ\_API\_KEY}
+```bash
+git status
+```
 
-# groq.model=llama-3.3-70b-versatile
+Add files:
 
-# 
+```bash
+git add .
+```
 
-# spring.servlet.multipart.max-file-size=10MB
+Commit:
 
-# spring.servlet.multipart.max-request-size=10MB
+```bash
+git commit -m "Add multi-input AI summarizer with Chrome extension"
+```
 
-# ```
+Push:
 
-# 
+```bash
+git push
+```
 
-# \---
+---
 
-# 
+## Future Enhancements
 
-# \## How to Run the Backend
+Possible future improvements:
 
-# 
+* Save summary history in a database
+* Add user login
+* Add Angular frontend
+* Add copy summary button in Chrome extension
+* Add download summary as PDF
+* Add question-answering from uploaded PDF
+* Add rate limiting for public API usage
+* Add API documentation using Swagger
 
-# From the backend project root folder, run:
+---
 
-# 
+## Author
 
-# ```bash
-
-# mvn clean spring-boot:run
-
-# ```
-
-# 
-
-# The backend will start at:
-
-# 
-
-# ```text
-
-# http://localhost:8080
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \## API Endpoints
-
-# 
-
-# \### 1. Text Summarization API
-
-# 
-
-# ```text
-
-# POST http://localhost:8080/api/summarize/text
-
-# ```
-
-# 
-
-# \#### Request Body
-
-# 
-
-# ```json
-
-# {
-
-# &#x20; "text": "Artificial intelligence helps students summarize content, understand concepts, and revise faster for exams.",
-
-# &#x20; "summaryType": "DEFAULT"
-
-# }
-
-# ```
-
-# 
-
-# \#### Example Response
-
-# 
-
-# ```json
-
-# {
-
-# &#x20; "summary": "Artificial intelligence helps students learn faster by summarizing content and explaining concepts clearly.",
-
-# &#x20; "keyPoints": \[
-
-# &#x20;   "AI helps students summarize long content.",
-
-# &#x20;   "AI can support exam revision.",
-
-# &#x20;   "AI makes concepts easier to understand."
-
-# &#x20; ],
-
-# &#x20; "notes": "AI can be used as a study assistant for summarizing notes, understanding topics, and preparing for exams."
-
-# }
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \### 2. PDF File Summarization API
-
-# 
-
-# ```text
-
-# POST http://localhost:8080/api/summarize/file
-
-# ```
-
-# 
-
-# \#### Postman Setup
-
-# 
-
-# Go to:
-
-# 
-
-# ```text
-
-# Body -> form-data
-
-# ```
-
-# 
-
-# Add:
-
-# 
-
-# ```text
-
-# Key: file
-
-# Type: File
-
-# Value: Upload your PDF file
-
-# ```
-
-# 
-
-# Optional summary type:
-
-# 
-
-# ```text
-
-# Key: summaryType
-
-# Type: Text
-
-# Value: DETAILED
-
-# ```
-
-# 
-
-# Supported values:
-
-# 
-
-# ```text
-
-# DEFAULT
-
-# BULLET\_POINTS
-
-# DETAILED
-
-# KEY\_INSIGHTS
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# 
-
-# 
-
-# \---
-
-# 
-
-# \## Test Using Postman
-
-# 
-
-# \### Test 1: Text API
-
-# 
-
-# 1\. Open Postman
-
-# 2\. Select `POST`
-
-# 3\. Enter:
-
-# 
-
-# ```text
-
-# http://localhost:8080/api/summarize/text
-
-# ```
-
-# 
-
-# 4\. Go to:
-
-# 
-
-# ```text
-
-# Body -> raw -> JSON
-
-# ```
-
-# 
-
-# 5\. Paste:
-
-# 
-
-# ```json
-
-# {
-
-# &#x20; "text": "Artificial intelligence helps students summarize content, understand concepts, and revise faster for exams.",
-
-# &#x20; "summaryType": "DEFAULT"
-
-# }
-
-# ```
-
-# 
-
-# 6\. Click `Send`
-
-# 
-
-# Expected result:
-
-# 
-
-# ```text
-
-# 200 OK
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \### Test 2: PDF API
-
-# 
-
-# 1\. Open Postman
-
-# 2\. Select `POST`
-
-# 3\. Enter:
-
-# 
-
-# ```text
-
-# http://localhost:8080/api/summarize/file
-
-# ```
-
-# 
-
-# 4\. Go to:
-
-# 
-
-# ```text
-
-# Body -> form-data
-
-# ```
-
-# 
-
-# 5\. Add:
-
-# 
-
-# ```text
-
-# file -> File -> choose a PDF
-
-# summaryType -> Text -> DETAILED
-
-# ```
-
-# 
-
-# 6\. Click `Send`
-
-# 
-
-# Expected result:
-
-# 
-
-# ```text
-
-# 200 OK
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \### Test 3: URL API
-
-# 
-
-# 1\. Open Postman
-
-# 2\. Select `POST`
-
-# 3\. Enter:
-
-# 
-
-# ```text
-
-# http://localhost:8080/api/summarize/url
-
-# ```
-
-# 
-
-# 4\. Go to:
-
-# 
-
-# ```text
-
-# Body -> raw -> JSON
-
-# ```
-
-# 
-
-# 5\. Paste:
-
-# 
-
-# ```json
-
-# {
-
-# &#x20; "url": "https://en.wikipedia.org/wiki/Artificial\_intelligence",
-
-# &#x20; "summaryType": "KEY\_INSIGHTS"
-
-# }
-
-# ```
-
-# 
-
-# 6\. Click `Send`
-
-# 
-
-# Expected result:
-
-# 
-
-# ```text
-
-# 200 OK
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \## Chrome Extension Setup
-
-# 
-
-# The Chrome extension is inside:
-
-# 
-
-# ```text
-
-# summarizer-chrome-extension/
-
-# ```
-
-# 
-
-# \### Load Extension in Chrome
-
-# 
-
-# 1\. Open Chrome
-
-# 2\. Go to:
-
-# 
-
-# ```text
-
-# chrome://extensions
-
-# ```
-
-# 
-
-# 3\. Turn on `Developer mode`
-
-# 4\. Click `Load unpacked`
-
-# 5\. Select the `summarizer-chrome-extension` folder
-
-# 6\. Pin the extension
-
-# 7\. Open any normal webpage
-
-# 8\. Click the extension icon
-
-# 9\. Select summary type
-
-# 10\. Click `Summarize This Page`
-
-# 
-
-# \### Extension API Used
-
-# 
-
-# The extension sends webpage text to:
-
-# 
-
-# ```text
-
-# POST http://localhost:8080/api/summarize/text
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-# \---
-
-# 
-
-# 
-
-# 
-
-# \---
-
-# 
-
-# ```
-
-# 
-
-# \---
-
-# 
-
-
-
+Tharun
