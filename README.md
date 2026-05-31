@@ -235,9 +235,6 @@ POST http://localhost:8080/api/summarize/url
 }
 ```
 
-#### Notes
-
-Some websites may block backend scraping or load content using JavaScript. In those cases, URL summarization may fail. The Chrome extension solves this better because it reads the already-loaded webpage content directly from the browser.
 
 ---
 
@@ -267,6 +264,4 @@ chrome://extensions
 9. Select summary type
 10. Click `Summarize This Page`
 
-## Author
 
-Tharun
